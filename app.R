@@ -59,43 +59,48 @@ ui <- dashboardPage( skin = "red",
 
 			# STUDENTS TAB
 			tabItem(tabName = "student1",
-				p("Student recruitment by county is shown. Total students included =", textOutput('totalStudents', inline = TRUE)),
+				p("This map shows student recruitment by county. Counties containing large cities are expected to generate more students on average."),
 				plotOutput("recruitPlot", height=600)
 			),
 			# STUDENTS/100,000 TAB
 			tabItem(tabName = "student2",
-				p("Student recruitment by county per 100,000 population is shown. Total students included =", textOutput('totalStudents2', inline = TRUE)),
+				p("This map shows student recruitment by county per 100,000 census population (2010 census numbers). By normalizing for population, we can see the relative effectiveness of recruiting by county."),
 				plotOutput("recruitPlot2", height=600)
 			),
 			# RETENTION TAB
 			tabItem(tabName = "retention",
-				p("Percent student retention (fall to fall) is coded by color. The numbers indicate students per county. Total students included =", textOutput('totalStudentsRetained', inline = TRUE)),
+				p("This map shows the percent student retention by county. These are calculated as percent students returning fall of their sophomore year at Ferris (fall to fall retention). The 2018 retention data are not available yet, so you need to exclude 2018 to get meaningful results on this tab."),
 				plotOutput("retentionPlot", height=600)
 			),
 			# HS GPA TAB
 			tabItem(tabName = "GPA",
-				p("The mean HS GPA is shown by color. Numbers indicate students per county. Total students included =", textOutput('totalStudentsGPA', inline = TRUE)),
+				p("This maps shows the mean high school GPAs of incoming students by county. High school GPA is a moderate predictor of retention."),
 				plotOutput("gpaPlot", height=600)
 			),
 			# ACT COMP TAB
 			tabItem(tabName = "comp",
-				p("This is just a place holder")
+					p("This maps shows the mean student ACT composite scores by county. The ACT composite scores are a good predictor of retention."),
+					plotOutput("compPlot", height=600)
 			),
 			# ACT ENGL TAB
 			tabItem(tabName = "engl",
-				p("This is just a place holder")
+					p("This maps shows the mean student ACT English scores by county. "),
+					plotOutput("englPlot", height=600)
 			),
 			# ACT READ TAB
 			tabItem(tabName = "read",
-				p("This is just a place holder")
+					p("This maps shows the mean student ACT reading scores by county. "),
+					plotOutput("readPlot", height=600)
 			),
 			# ACT MATH TAB
 			tabItem(tabName = "math",
-				p("This is just a place holder")
+					p("This maps shows the mean student ACT math scores by county. The ACT math scores are a good predictor of retention."),
+					plotOutput("mathPlot", height=600)
 			),
 			# ACT SCI TAB
 			tabItem(tabName = "sci",
-				p("This is just a place holder")
+					p("This maps shows the mean student ACT science scores by county."),
+					plotOutput("sciPlot", height=600)
 			)
 
 		),
@@ -172,9 +177,10 @@ server = function(input, output) {
 		filtered <- as.data.frame(filtered)
 		MIdata <- merge(filtered, mi_county_labels)
 
-		county_choropleth(filtered, state_zoom = "michigan") +
+		county_choropleth(MIdata,state_zoom = "michigan") +
 		scale_fill_brewer("Percent\nRetention",palette="Reds") +
-		geom_text(data = MIdata, aes(long, lat, label = paste(round(value,0),"%",sep=""), group = NULL), color = 'black')
+		geom_text(data = MIdata, aes(long, lat, label = paste(round(value,0),"%",sep=""), group = NULL), color = 'black')+
+			annotate("text", x = -85, y = 48.5, label = paste("Mean Retention = ",paste(round(mean(MIdata$value),1),"%"),"\n",names(collegeVector)[collegeVector == input$college],"\nFrom",input$years[1],"to",input$years[2]), size=5, fontface="bold")
 	})
 
 
@@ -200,9 +206,10 @@ server = function(input, output) {
 		filtered <- as.data.frame(filtered)
 		MIdata <- merge(filtered, mi_county_labels)
 
-		county_choropleth(filtered, state_zoom = "michigan") +
+		county_choropleth(MIdata, state_zoom = "michigan") +
 			scale_fill_brewer("Students\nRecruited",palette="Reds") +
-			geom_text(data = MIdata, aes(long, lat, label = value, group = NULL), color = 'black')
+			geom_text(data = MIdata, aes(long, lat, label = value, group = NULL), color = 'black')+
+			annotate("text", x = -85, y = 48.5, label = paste("Total students = ",sum(MIdata$value),"\n",names(collegeVector)[collegeVector == input$college],"\nFrom",input$years[1],"to",input$years[2]), size=5, fontface="bold")
 	})
 
 
@@ -222,16 +229,17 @@ server = function(input, output) {
 		       	group_by(COUNTY_CODE_ORIG) %>%
 		       	summarize(value=length(TERM))
 		)
-		filtered$value <- round(filtered$value*100000/census,0)
 		colnames(filtered) <- c("region","value")
 		filtered$region <- paste(26, substr(filtered$region, 3, 5), sep="")
 		filtered$region <- as.numeric(filtered$region)
 		filtered <- as.data.frame(filtered)
 		MIdata <- merge(filtered, mi_county_labels)
+		MIdata$value <- round(MIdata$value*100000/MIdata$pop,0)
 
-		county_choropleth(filtered, state_zoom = "michigan") +
+		county_choropleth(MIdata, state_zoom = "michigan") +
 			scale_fill_brewer("Recruitment\nper 100,000",palette="Reds") +
-			geom_text(data = MIdata, aes(long, lat, label = value, group = NULL), color = 'black')
+			geom_text(data = MIdata, aes(long, lat, label = value, group = NULL), color = 'black')+
+			annotate("text", x = -85, y = 48.5, label = paste("Median students per 100,000 = ",round(median(MIdata$value),2),"\n",names(collegeVector)[collegeVector == input$college],"\nFrom",input$years[1],"to",input$years[2]), size=5, fontface="bold")
 	})
 
 
@@ -260,60 +268,171 @@ server = function(input, output) {
 		filtered <- as.data.frame(filtered)
 		MIdata <- merge(filtered, mi_county_labels)
 
-		county_choropleth(filtered, state_zoom = "michigan") +
+		county_choropleth(MIdata, state_zoom = "michigan") +
 			scale_fill_brewer("Mean\nHS GPA",palette="Reds") +
-			geom_text(data = MIdata, aes(long, lat, label = round(value,2), group = NULL), color = 'black')
+			geom_text(data = MIdata, aes(long, lat, label = round(value,2), group = NULL), color = 'black') +
+			annotate("text", x = -85, y = 48.5, label = paste("Mean GPA = ",round(mean(MIdata$value),2),"\n",names(collegeVector)[collegeVector == input$college],"\nFrom",input$years[1],"to",input$years[2]), size=5, fontface="bold")
 	})
 
 
-	output$totalStudentsRetained <- renderText({ifelse(input$college == "ALL",
-				nrow(FTIAC_data %>%
-					filter(TERM >= input$years[1],
-					       TERM <= input$years[2]
-					       )
-				),
-				nrow(FTIAC_data %>%
-				     	filter(TERM >= input$years[1],
-				     	       TERM <= input$years[2],
-				     	       COLLEGE == input$college
-				     	)
-				))})
-	output$totalStudents <- renderText({ifelse(input$college == "ALL",
-				nrow(FTIAC_data %>%
-				       	filter(TERM >= input$years[1],
-				       	       TERM <= input$years[2]
-					       	)
-				   ),
-				nrow(FTIAC_data %>%
-				       	filter(TERM >= input$years[1],
-				       	       TERM <= input$years[2],
-				       	       COLLEGE == input$college
-				       	)
-				))})
-	output$totalStudents2 <- renderText({ifelse(input$college == "ALL",
-						   nrow(FTIAC_data %>%
-						        	filter(TERM >= input$years[1],
-						        	       TERM <= input$years[2]
-						        	)
-						   ),
-						   nrow(FTIAC_data %>%
-						        	filter(TERM >= input$years[1],
-						        	       TERM <= input$years[2],
-						        	       COLLEGE == input$college
-						        	)
-						   ))})
-	output$totalStudentsGPA <- renderText({ifelse(input$college == "ALL",
-						    nrow(FTIAC_data %>%
-						         	filter(TERM >= input$years[1],
-						         	       TERM <= input$years[2]
-						         	)
-						    ),
-						    nrow(FTIAC_data %>%
-						         	filter(TERM >= input$years[1],
-						         	       TERM <= input$years[2],
-						         	       COLLEGE == input$college
-						         	)
-						    ))})
+	output$compPlot <- renderPlot({
+		ifelse(input$college == "ALL",
+			   filtered <- FTIAC_data %>% filter(
+			   	TERM >= input$years[1],
+			   	TERM <= input$years[2]
+			   ) %>%
+			   	group_by(COUNTY_CODE_ORIG) %>%
+			   	summarize(value=mean(ACT_COMP, na.rm=TRUE),
+			   			  N=length(RETAINED)),
+			   filtered <- FTIAC_data %>% filter(
+			   	TERM >= input$years[1],
+			   	TERM <= input$years[2],
+			   	COLLEGE == input$college
+			   ) %>%
+			   	group_by(COUNTY_CODE_ORIG) %>%
+			   	summarize(value=mean(ACT_COMP, na.rm=TRUE),
+			   			  N=length(RETAINED))
+		)
+
+		colnames(filtered) <- c("region","value","N")
+		filtered$region <- paste(26, substr(filtered$region, 3, 5), sep="")
+		filtered$region <- as.numeric(filtered$region)
+		filtered <- as.data.frame(filtered)
+		MIdata <- merge(filtered, mi_county_labels)
+
+		county_choropleth(MIdata, state_zoom = "michigan") +
+			scale_fill_brewer("Mean\nACT Composite",palette="Reds") +
+			geom_text(data = MIdata, aes(long, lat, label = round(value,1), group = NULL), color = 'black') +
+			annotate("text", x = -85, y = 48.5, label = paste("Mean ACT Composite = ",round(mean(MIdata$value, na.rm=TRUE),1),"\n",names(collegeVector)[collegeVector == input$college],"\nFrom",input$years[1],"to",input$years[2]), size=5, fontface="bold")
+	})
+
+
+	output$englPlot <- renderPlot({
+		ifelse(input$college == "ALL",
+			   filtered <- FTIAC_data %>% filter(
+			   	TERM >= input$years[1],
+			   	TERM <= input$years[2]
+			   ) %>%
+			   	group_by(COUNTY_CODE_ORIG) %>%
+			   	summarize(value=mean(ACT_ENGL, na.rm=TRUE),
+			   			  N=length(RETAINED)),
+			   filtered <- FTIAC_data %>% filter(
+			   	TERM >= input$years[1],
+			   	TERM <= input$years[2],
+			   	COLLEGE == input$college
+			   ) %>%
+			   	group_by(COUNTY_CODE_ORIG) %>%
+			   	summarize(value=mean(ACT_ENGL, na.rm=TRUE),
+			   			  N=length(RETAINED))
+		)
+
+		colnames(filtered) <- c("region","value","N")
+		filtered$region <- paste(26, substr(filtered$region, 3, 5), sep="")
+		filtered$region <- as.numeric(filtered$region)
+		filtered <- as.data.frame(filtered)
+		MIdata <- merge(filtered, mi_county_labels)
+
+		county_choropleth(MIdata, state_zoom = "michigan") +
+			scale_fill_brewer("Mean\nACT English",palette="Reds") +
+			geom_text(data = MIdata, aes(long, lat, label = round(value,1), group = NULL), color = 'black') +
+			annotate("text", x = -85, y = 48.5, label = paste("Mean ACT English = ",round(mean(MIdata$value, na.rm=TRUE),1),"\n",names(collegeVector)[collegeVector == input$college],"\nFrom",input$years[1],"to",input$years[2]), size=5, fontface="bold")
+	})
+
+
+	output$readPlot <- renderPlot({
+		ifelse(input$college == "ALL",
+			   filtered <- FTIAC_data %>% filter(
+			   	TERM >= input$years[1],
+			   	TERM <= input$years[2]
+			   ) %>%
+			   	group_by(COUNTY_CODE_ORIG) %>%
+			   	summarize(value=mean(ACT_READING, na.rm=TRUE),
+			   			  N=length(RETAINED)),
+			   filtered <- FTIAC_data %>% filter(
+			   	TERM >= input$years[1],
+			   	TERM <= input$years[2],
+			   	COLLEGE == input$college
+			   ) %>%
+			   	group_by(COUNTY_CODE_ORIG) %>%
+			   	summarize(value=mean(ACT_READING, na.rm=TRUE),
+			   			  N=length(RETAINED))
+		)
+
+		colnames(filtered) <- c("region","value","N")
+		filtered$region <- paste(26, substr(filtered$region, 3, 5), sep="")
+		filtered$region <- as.numeric(filtered$region)
+		filtered <- as.data.frame(filtered)
+		MIdata <- merge(filtered, mi_county_labels)
+
+		county_choropleth(MIdata, state_zoom = "michigan") +
+			scale_fill_brewer("Mean\nACT Reading",palette="Reds") +
+			geom_text(data = MIdata, aes(long, lat, label = round(value,1), group = NULL), color = 'black') +
+			annotate("text", x = -85, y = 48.5, label = paste("Mean ACT Reading = ",round(mean(MIdata$value, na.rm=TRUE),1),"\n",names(collegeVector)[collegeVector == input$college],"\nFrom",input$years[1],"to",input$years[2]), size=5, fontface="bold")
+	})
+
+
+	output$mathPlot <- renderPlot({
+		ifelse(input$college == "ALL",
+			   filtered <- FTIAC_data %>% filter(
+			   	TERM >= input$years[1],
+			   	TERM <= input$years[2]
+			   ) %>%
+			   	group_by(COUNTY_CODE_ORIG) %>%
+			   	summarize(value=mean(ACT_MATH, na.rm=TRUE),
+			   			  N=length(RETAINED)),
+			   filtered <- FTIAC_data %>% filter(
+			   	TERM >= input$years[1],
+			   	TERM <= input$years[2],
+			   	COLLEGE == input$college
+			   ) %>%
+			   	group_by(COUNTY_CODE_ORIG) %>%
+			   	summarize(value=mean(ACT_MATH, na.rm=TRUE),
+			   			  N=length(RETAINED))
+		)
+
+		colnames(filtered) <- c("region","value","N")
+		filtered$region <- paste(26, substr(filtered$region, 3, 5), sep="")
+		filtered$region <- as.numeric(filtered$region)
+		filtered <- as.data.frame(filtered)
+		MIdata <- merge(filtered, mi_county_labels)
+
+		county_choropleth(MIdata, state_zoom = "michigan") +
+			scale_fill_brewer("Mean\nACT Math",palette="Reds") +
+			geom_text(data = MIdata, aes(long, lat, label = round(value,1), group = NULL), color = 'black') +
+			annotate("text", x = -85, y = 48.5, label = paste("Mean ACT Math = ",round(mean(MIdata$value, na.rm=TRUE),1),"\n",names(collegeVector)[collegeVector == input$college],"\nFrom",input$years[1],"to",input$years[2]), size=5, fontface="bold")
+	})
+
+
+	output$sciPlot <- renderPlot({
+		ifelse(input$college == "ALL",
+			   filtered <- FTIAC_data %>% filter(
+			   	TERM >= input$years[1],
+			   	TERM <= input$years[2]
+			   ) %>%
+			   	group_by(COUNTY_CODE_ORIG) %>%
+			   	summarize(value=mean(ACT_SCIENCE, na.rm=TRUE),
+			   			  N=length(RETAINED)),
+			   filtered <- FTIAC_data %>% filter(
+			   	TERM >= input$years[1],
+			   	TERM <= input$years[2],
+			   	COLLEGE == input$college
+			   ) %>%
+			   	group_by(COUNTY_CODE_ORIG) %>%
+			   	summarize(value=mean(ACT_SCIENCE, na.rm=TRUE),
+			   			  N=length(RETAINED))
+		)
+
+		colnames(filtered) <- c("region","value","N")
+		filtered$region <- paste(26, substr(filtered$region, 3, 5), sep="")
+		filtered$region <- as.numeric(filtered$region)
+		filtered <- as.data.frame(filtered)
+		MIdata <- merge(filtered, mi_county_labels)
+
+		county_choropleth(MIdata, state_zoom = "michigan") +
+			scale_fill_brewer("Mean\nACT Science",palette="Reds") +
+			geom_text(data = MIdata, aes(long, lat, label = round(value,1), group = NULL), color = 'black') +
+			annotate("text", x = -85, y = 48.5, label = paste("Mean ACT Science = ",round(mean(MIdata$value, na.rm=TRUE),1),"\n",names(collegeVector)[collegeVector == input$college],"\nFrom",input$years[1],"to",input$years[2]), size=5, fontface="bold")
+	})
 
 }
 
