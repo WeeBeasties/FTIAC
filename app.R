@@ -49,10 +49,11 @@ ui <- dashboardPage( skin = "red",
 			# INTRODUCTION TAB
 			tabItem(tabName = "introduction",
 				fluidRow(
-					p(strong("Overview -"),"This dashboard has been created using Shiny and the R programming language. Its purpose is to explore possible patterns in the recruitment and retention of full time, freshman, FTIAC students at Ferris State University from 2010 to 2018."),
+					p(strong("Overview -"),"This dashboard has been created using Shiny and the R programming language. Its purpose is to explore possible patterns in the recruitment and retention of full time, freshman, FTIAC students at Ferris State University from 2010 to 2018. The full dataset contained 17,329 student records. Out of state and foreign students were subsequently removed resulting in 15,930 records (92% in-state enrollment). Please note that these data do not contain transfer or part-time students. Therefore, you should exercise a bit of caution when attempting to generalize these findings to the entire Ferris enrollment."),
 					p(strong("Data -"),"The data used for this site were obtained from Institutional Research and Testing at Ferris State University. A special thanks to Jerome Forbes, Kathy Fisher, and Mitzi Day for providing the raw data. In compliance with FERPA, all personally identifiable information has been removed from the dataset."),
-					p(strong("Code -"),"All of the working data and code for this project can be found", a("online", href="http://www.ferris.edu"), "here."),
-					p(strong("License -"),"This work is released under the MIT license. © Clifton Franklund, 2019. Please feel free to use, modify, and share these materials. However, I would appreciate it if you would cite my work.")
+					p(strong("Code -"),"All of the working data and code for this project can be found", a("online here", href="https://osf.io/qv27k"), "."),
+					p(strong("License -"),"This work is released under the MIT license. © Clifton Franklund, 2019. Please feel free to use, modify, and share these materials. However, I would appreciate it if you would cite this work. The recommended citation is:"),
+					p("Franklund, C. (2019, January 21). FTIAC Analysis. Retrieved from osf.io/qv27k")
 				)
 			),
 
