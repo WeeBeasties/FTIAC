@@ -21,6 +21,21 @@ h4 {
 	padding-left: 15px;
 }
 
+.skin-red .main-header .logo {
+background-color: #BA0C2F;
+font-weight: 450;
+}
+
+.skin-red .main-header .navbar{
+background-color: #BA0C2F;
+font-weight: 400;
+}
+
+.skin-red .sidebar-menu>li.active>a, .skin-red .sidebar-menu>li:hover>a {
+border-left-color: #BA0C2F;
+border-left-width: 5px;
+}
+
 .sidebar-menu li {
 	padding-left: 10px;
 	font-size: 18px;
